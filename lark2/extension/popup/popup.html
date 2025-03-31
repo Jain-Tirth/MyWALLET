@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ReactConnect</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>ReactConnect</h1>
+    <div id="account-info" style="display:none;"></div>
+    
+    <div id="auth-forms">
+      <div class="auth-form" id="signin-form">
+        <h3>Sign In</h3>
+        <input type="text" id="signin-email" placeholder="Email">
+        <input type="password" id="signin-password" placeholder="Password">
+        <button id="signin-btn">Sign In</button>
+        <p class="auth-toggle">New user? <a href="#" id="show-signup">Sign up</a></p>
+      </div>
+  
+      <div class="auth-form" id="signup-form" style="display:none;">
+        <h3>Sign Up</h3>
+        <input type="text" id="signup-email" placeholder="Email">
+        <input type="password" id="signup-password" placeholder="Password">
+        <input type="password" id="signup-confirm" placeholder="Confirm Password">
+        <button id="signup-btn">Sign Up</button>
+        <p class="auth-toggle">Already have an account? <a href="#" id="show-signin">Sign in</a></p>
+      </div>
+    </div>
+    
+    <button id="lock-btn" style="display:none;">Lock Wallet</button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+
+</html>

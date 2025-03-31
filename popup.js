@@ -85,36 +85,39 @@ let provider;
 let privateKey;
 let address;
 
-function handler() {
-    document.getElementById("transfer_center").style.display = "flex";
+async function handler() {
+    try {
+        const amount = document.getElementById("amout").value;
+        const address = document.getElementById("address").value;
+        const privateKey = "bbeb0c47211b1926302183ee90917c7b055d479035e08183c550ade280a87528";
 
-    const amount = document.getElementById("amout").value
-    const address = document.getElementById("address").value;
+        // Store transaction data in Appwrite
+        await databases.createDocument(
+            'YOUR_DATABASE_ID',
+            'YOUR_TRANSACTIONS_COLLECTION_ID',
+            ID.unique(),
+            {
+                type: 'send',
+                from: address,
+                to: address,
+                amount: amount,
+                network: 'polygon',
+                status: 'pending',
+                timestamp: new Date().toISOString()
+            }
+        );
 
-    const privateKey = "bbeb0c47211b1926302183ee90917c7b055d479035e08183c550ade280a87528";
+        // Navigate to React app for transaction
+        chrome.tabs.create({
+            url: 'http://localhost:3000?action=send&amount=' + amount + '&address=' + address
+        });
 
-    const testAccount = ""; // I'l take this from pratham metamask account.
-
-    // Provider
-
-    const provider = new ethers.providers.JsonRpcProvider(providerURL);
-
-    let wallet = new ethers.Wallet(privateKey, provider);
-
-    const tx = { to: address, value: ethers.utils.parseEther(amount) }; let a = document.getElementById("link");
-
-    a.href = "somelink url";
-
-    wallet.sendTransaction(tx).then((res) => {
-        console.log("txHASH: ", txObj.hash);
-        document.getElementById("transfer_center").style.display = "none";
-        const a = document.getElementById("link");
-        document.getElementById("link").href = "https://etherscan.io/tx/" + txObj.hash;
-
-        document.getElementById("link").style.display = "block";
-    })
-
-};
+        window.close();
+    } catch (error) {
+        console.error("Error in handler:", error);
+        alert("Error processing transaction");
+    }
+}
 
 function checkBalanace(address) {
     const provider = new ethers.providers.JsonRpcProvider(providerURL);
@@ -260,12 +263,31 @@ async function login() {
                 privateKey: userData.privateKey,
                 mnemonic: userData.mnemonic
             };
-            localStorage.setItem("userWallet", JSON.stringify(userWallet));
-        }
+            
+            // Store wallet data in extension storage
+            chrome.storage.local.set({ userWallet: userWallet }, function() {
+                console.log('Wallet data saved to extension storage');
+            });
 
-        document.getElementById("login_form").style.display = "none";
-        document.getElementById("center").style.display = "block";
-        window.location.reload();
+            // Send message to React app
+            chrome.tabs.query({url: 'http://localhost:3000/*'}, function(tabs) {
+                if (tabs.length > 0) {
+                    // If React app is open, send message to it
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        type: 'WALLET_DATA',
+                        wallet: userWallet
+                    });
+                } else {
+                    // If React app is not open, open it in a new tab
+                    chrome.tabs.create({
+                        url: 'http://localhost:3000'
+                    });
+                }
+            });
+
+            // Close the popup
+            window.close();
+        }
     } catch (error) {
         console.error("Error during login:", error);
         alert("Invalid email or password");
@@ -329,59 +351,67 @@ function closeImportModel() {
 };
 
 
-function addToken() {
-    const address = document.getElementById("token_address").value;
-    const name = document.getElementById("token_name").value;
-    const symbol = document.getElementById("token_symbol").value;
+async function addToken() {
+    try {
+        const address = document.getElementById("token_address").value;
+        const name = document.getElementById("token_name").value;
+        const symbol = document.getElementById("token_symbol").value;
 
-    // API call 
-    const url = "https://localhost:3000/api/v1/tokens/createToken";
-    const data = {
-        address: address,
-        name: name,
-        symbol: symbol
+        // Store token data in Appwrite
+        await databases.createDocument(
+            'YOUR_DATABASE_ID',
+            'YOUR_TOKENS_COLLECTION_ID',
+            ID.unique(),
+            {
+                address: address,
+                name: name,
+                symbol: symbol,
+                timestamp: new Date().toISOString()
+            }
+        );
+
+        // Navigate to React app for token management
+        chrome.tabs.create({
+            url: 'http://localhost:3000?action=tokens'
+        });
+
+        window.close();
+    } catch (error) {
+        console.error("Error adding token:", error);
+        alert("Error adding token");
     }
-    fetch(url, {
-        method: "POST",
-        handler: {
-            "Content-type": "application/json"
-        },
-        body: JSON.stringify(data),
-    }).then(response => response.json()).then((result) => {
-        console.log(result);
-        window.location.reload();
-    }).catch(error => {
-        console.error("Error:", error);
-    });
-};
+}
 
-function addAccount() {
-    const privateKey = document.getElementById("private_key").value;
-    const provider = new ethers.providers.JsonRpcProvider(providerURL);
-    // const address = document.getElementById("address").value;
-    // const mnemonic = document.getElementById("mnemonic").value;
-    let wallet = new ethers.wallet(privateKey, provider);
-    console.log(wallet);
-    const url = "https://localhost:3000/api/v1/account/createAccount";
-    const data = {
-        privateKey: privateKey,
-        address: wallet.address,
+async function addAccount() {
+    try {
+        const privateKey = document.getElementById("private_key").value;
+        const provider = new ethers.providers.JsonRpcProvider(providerURL);
+        let wallet = new ethers.Wallet(privateKey, provider);
 
+        // Store account data in Appwrite
+        await databases.createDocument(
+            'YOUR_DATABASE_ID',
+            'YOUR_ACCOUNTS_COLLECTION_ID',
+            ID.unique(),
+            {
+                address: wallet.address,
+                privateKey: privateKey,
+                network: 'polygon',
+                timestamp: new Date().toISOString()
+            }
+        );
+
+        // Navigate to React app for account management
+        chrome.tabs.create({
+            url: 'http://localhost:3000?action=accounts'
+        });
+
+        window.close();
+    } catch (error) {
+        console.error("Error adding account:", error);
+        alert("Error adding account");
     }
-    fetch(url, {
-        method: "POST",
-        handler: {
-            "Content-type": "application/json"
-        },
-        body: JSON.stringify(data),
-    }).then(response => response.json()).then((result) => {
-        console.log(result);
-        window.location.reload();
-    }).catch(error => {
-        console.error("Error:", error);
-    });
-
-};
+}
 
 function myFunction() {
     const str = localStorage.getItem("userWallet");
@@ -449,3 +479,248 @@ function changeAccount() {
  };
 
 window.onload = myFunction;
+
+// Add new function for handling swap
+async function handleSwap() {
+    try {
+        // Store swap data in Appwrite
+        await databases.createDocument(
+            'YOUR_DATABASE_ID',
+            'YOUR_SWAPS_COLLECTION_ID',
+            ID.unique(),
+            {
+                type: 'swap',
+                status: 'pending',
+                timestamp: new Date().toISOString()
+            }
+        );
+
+        // Navigate to React app for swap
+        chrome.tabs.create({
+            url: 'http://localhost:3000?action=swap'
+        });
+
+        window.close();
+    } catch (error) {
+        console.error("Error in swap:", error);
+        alert("Error processing swap");
+    }
+}
+
+// Add new function for handling buy/sell
+async function handleTrade(action) {
+    try {
+        // Store trade data in Appwrite
+        await databases.createDocument(
+            'YOUR_DATABASE_ID',
+            'YOUR_TRADES_COLLECTION_ID',
+            ID.unique(),
+            {
+                type: action,
+                status: 'pending',
+                timestamp: new Date().toISOString()
+            }
+        );
+
+        // Navigate to React app for trading
+        chrome.tabs.create({
+            url: `http://localhost:3000?action=${action}`
+        });
+
+        window.close();
+    } catch (error) {
+        console.error("Error in trade:", error);
+        alert("Error processing trade");
+    }
+}
+
+(() => {
+    // Get DOM elements
+    const authForms = document.getElementById("auth-forms");
+    const accountInfo = document.getElementById("account-info");
+    const lockBtn = document.getElementById("lock-btn");
+    const signinForm = document.getElementById("signin-form");
+    const signupForm = document.getElementById("signup-form");
+
+    // Function to reset the UI to initial state
+    function resetUI() {
+        authForms.style.display = "block";
+        accountInfo.style.display = "none";
+        lockBtn.style.display = "none";
+        signinForm.style.display = "block";
+        signupForm.style.display = "none";
+
+        // Clear form inputs
+        document.getElementById("signin-email").value = "";
+        document.getElementById("signin-password").value = "";
+        document.getElementById("signup-email").value = "";
+        document.getElementById("signup-password").value = "";
+        document.getElementById("signup-confirm").value = "";
+
+        // Clear extension storage
+        chrome.storage.local.clear(() => {
+            console.log("All states cleared");
+        });
+    }
+
+    // Function to display account information and wallet interface
+    function displayAccountInfo() {
+        authForms.style.display = "none";
+        accountInfo.style.display = "block";
+        lockBtn.style.display = "block";
+
+        // Connect to wallet
+        chrome.runtime.sendMessage({ action: "connect" }, (response) => {
+            if (response.success) {
+                // Get authentication status
+                chrome.runtime.sendMessage({ action: "getAuthStatus" }, (authStatus) => {
+                    const userEmail = authStatus.email;
+                    
+                    // Update account info HTML
+                    document.getElementById("account-info").innerHTML = `
+                        <div class="user-info">
+                            <p>Logged in as: ${userEmail}</p>
+                            <p>Connected: ${response.accounts[0].slice(0,6)}...${response.accounts[0].slice(-4)}</p>
+                        </div>
+                        <div class="wallet-header">
+                            <div class="network-indicator">Ethereum Mainnet</div>
+                            <div class="balance">0.00 ETH</div>
+                        </div>
+                        
+                        <div class="action-grid">
+                            <button class="action-btn" id="send-btn">
+                                <svg class="action-icon" viewBox="0 0 24 24">
+                                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                </svg>
+                                Send
+                            </button>
+                            <button class="action-btn" id="receive-btn">
+                                <svg class="action-icon" viewBox="0 0 24 24">
+                                    <path d="M22 12l-4-4v3H3v2h15v3z"/>
+                                </svg>
+                                Receive
+                            </button>
+                            <button class="action-btn" id="swap-btn">
+                                <svg class="action-icon" viewBox="0 0 24 24">
+                                    <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>
+                                </svg>
+                                Swap
+                            </button>
+                            <button class="action-btn" id="buy-btn">
+                                <svg class="action-icon" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                                </svg>
+                                Buy
+                            </button>
+                            <button class="action-btn" id="sell-btn">
+                                <svg class="action-icon" viewBox="0 0 24 24">
+                                    <path d="M16 17V5H4v2h10v10h2zm2 2H12V9h6V5h2v14z"/>
+                                </svg>
+                                Sell
+                            </button>
+                        </div>
+                    `;
+
+                    // Add event listeners for action buttons
+                    setupActionButtons(response.accounts[0]);
+                });
+            }
+        });
+    }
+
+    // Function to handle authentication (sign in/register)
+    function handleAuth(action) {
+        const emailInput = document.getElementById(`${action === "register" ? "signup" : "signin"}-email`);
+        const passwordInput = document.getElementById(`${action === "register" ? "signup" : "signin"}-password`);
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        if (validateEmail(email) && validatePassword(password)) {
+            if (action === "register" && password !== document.getElementById("signup-confirm").value) {
+                alert("Passwords don't match!");
+                return;
+            }
+
+            chrome.runtime.sendMessage({ action, email, password }, (response) => {
+                if (response.success) {
+                    displayAccountInfo();
+                } else if (action === "authenticate") {
+                    if (response.error === "User not found") {
+                        alert("Account not found. Please sign up first.");
+                        signinForm.style.display = "none";
+                        signupForm.style.display = "block";
+                    } else if (response.error === "Invalid password") {
+                        alert("Incorrect password. Please try again.");
+                    }
+                } else if (action === "register" && response.error === "User exists") {
+                    alert("Account already exists. Please sign in instead.");
+                    signupForm.style.display = "none";
+                    signinForm.style.display = "block";
+                }
+            });
+        }
+    }
+
+    // Email validation function
+    function validateEmail(email) {
+        const isValid = /^[^\s@]+@gmail\.com$/.test(email);
+        if (!isValid) {
+            alert("Please enter a valid Gmail address");
+        }
+        return isValid;
+    }
+
+    // Password validation function
+    function validatePassword(password) {
+        const isValid = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/.test(password);
+        if (!isValid) {
+            alert("Password must contain:\n- 8+ characters\n- Uppercase letter\n- Lowercase letter\n- Number");
+        }
+        return isValid;
+    }
+
+    // Event Listeners
+    document.getElementById("show-signup").addEventListener("click", (e) => {
+        e.preventDefault();
+        signinForm.style.display = "none";
+        signupForm.style.display = "block";
+    });
+
+    document.getElementById("show-signin").addEventListener("click", (e) => {
+        e.preventDefault();
+        signupForm.style.display = "none";
+        signinForm.style.display = "block";
+    });
+
+    document.getElementById("signin-btn").addEventListener("click", (e) => {
+        e.preventDefault();
+        handleAuth("authenticate");
+    });
+
+    document.getElementById("signup-btn").addEventListener("click", (e) => {
+        e.preventDefault();
+        handleAuth("register");
+    });
+
+    // Lock button event listener
+    lockBtn.addEventListener("click", () => {
+        chrome.runtime.sendMessage({ action: "disconnect" }, () => {
+            chrome.runtime.sendMessage({ action: "lock" }, (response) => {
+                if (response.success) {
+                    resetUI();
+                }
+            });
+        });
+    });
+
+    // Check authentication status on page load
+    document.addEventListener("DOMContentLoaded", () => {
+        chrome.runtime.sendMessage({ action: "getAuthStatus" }, (response) => {
+            if (response.authenticated) {
+                displayAccountInfo();
+            } else {
+                resetUI();
+            }
+        });
+    });
+})();

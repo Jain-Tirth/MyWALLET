@@ -1,26 +1,33 @@
 {
-    "manifest_version": 3,
-    "name": "ReactConnect Wallet",
+    "manifest_version": 2,
+    "name": "MyWALLET",
     "version": "1.0",
-    "description": "A secure wallet for React applications",
+    "description": "A secure Web3 wallet for managing multiple blockchain networks",
     "action": {
       "default_popup": "popup/popup.html",
       "default_icon": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
         "128": "icons/icon128.png"
       }
     },
     "background": {
-      "service_worker": "background.js"
+      "scripts": ["background.js"],
+      "persistent": false
     },
     "content_scripts": [{
-      "matches": ["<all_urls>"],
+      "matches": ["http://localhost:3000/*"],
       "js": ["content-script.js"]
     }],
     "permissions": [
       "storage",
-      "activeTab"
+      "activeTab",
+      "tabs",
+      "http://localhost:3000/*"
     ],
     "icons": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
   }

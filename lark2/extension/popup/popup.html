@@ -2,7 +2,8 @@
 <html>
 
 <head>
-  <title>ReactConnect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyWALLET</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 
@@ -13,20 +14,34 @@
     
     <div id="auth-forms">
       <div class="auth-form" id="signin-form">
-        <h3>Sign In</h3>
-        <input type="text" id="signin-email" placeholder="Email">
-        <input type="password" id="signin-password" placeholder="Password">
-        <button id="signin-btn">Sign In</button>
-        <p class="auth-toggle">New user? <a href="#" id="show-signup">Sign up</a></p>
+        <h2>Welcome to MyWALLET</h2>
+        <form>
+          <div class="form-group">
+            <input type="email" id="signin-email" placeholder="Email" required>
+          </div>
+          <div class="form-group">
+            <input type="password" id="signin-password" placeholder="Password" required>
+          </div>
+          <button type="button" id="signin-btn">Sign In</button>
+          <p>Don't have an account? <a href="#" id="show-signup">Sign Up</a></p>
+        </form>
       </div>
   
       <div class="auth-form" id="signup-form" style="display:none;">
-        <h3>Sign Up</h3>
-        <input type="text" id="signup-email" placeholder="Email">
-        <input type="password" id="signup-password" placeholder="Password">
-        <input type="password" id="signup-confirm" placeholder="Confirm Password">
-        <button id="signup-btn">Sign Up</button>
-        <p class="auth-toggle">Already have an account? <a href="#" id="show-signin">Sign in</a></p>
+        <h2>Create MyWALLET Account</h2>
+        <form>
+          <div class="form-group">
+            <input type="email" id="signup-email" placeholder="Email" required>
+          </div>
+          <div class="form-group">
+            <input type="password" id="signup-password" placeholder="Password" required>
+          </div>
+          <div class="form-group">
+            <input type="password" id="signup-confirm" placeholder="Confirm Password" required>
+          </div>
+          <button type="button" id="signup-btn">Sign Up</button>
+          <p>Already have an account? <a href="#" id="show-signin">Sign In</a></p>
+        </form>
       </div>
     </div>
     
